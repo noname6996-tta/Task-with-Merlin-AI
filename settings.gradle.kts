@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Task with MerlinAI"
 include(":app")
+include(":chat_ai")
