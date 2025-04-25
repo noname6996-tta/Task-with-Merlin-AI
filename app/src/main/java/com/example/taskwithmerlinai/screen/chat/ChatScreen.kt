@@ -12,8 +12,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -31,45 +32,42 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.taskwithmerlinai.ChatAiViewModel
-import com.example.taskwithmerlinai.model.ChatMessage
+import com.example.taskwithmerlinai.data.model.ChatMessage
 import com.tta.chat_ai.Logger
 import com.tta.chat_ai.UiState
 
 @Composable
 fun ChatScreen(
-    chatAiViewModel: ChatAiViewModel = viewModel()
+    onBack: () -> Unit,
+    chatAiViewModel: ChatAiViewModel = hiltViewModel()
 ) {
     val uiState by chatAiViewModel.uiState.collectAsState()
     val messages = remember { mutableStateListOf<ChatMessage>() }
     var currentText by remember { mutableStateOf("") }
+
+    LaunchedEffect(uiState) {
+        when (val state = uiState) {
+            is UiState.Error -> {
+                Logger.d("Error")
+                messages.add(ChatMessage(System.currentTimeMillis(), state.errorMessage, isFromMe = false))
+            }
+
+            is UiState.Success -> {
+                Logger.d("Success \n ${state.outputText}")
+                messages.add(ChatMessage(System.currentTimeMillis(), state.outputText, isFromMe = false))
+            }
+
+            else -> Unit
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFEFEFEF))
     ) {
-        when (val state = uiState) {
-            is UiState.Loading -> {
-                Logger.d("Loading")
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-            }
-
-            is UiState.Error -> {
-                Logger.d("Error")
-                messages.add(ChatMessage(System.currentTimeMillis(), state.errorMessage, isFromMe = false))
-
-            }
-
-            is UiState.Success -> {
-                Logger.d("Success")
-                messages.add(ChatMessage(System.currentTimeMillis(), state.outputText, isFromMe = false))
-            }
-
-            else -> {}
-        }
-
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
@@ -112,13 +110,17 @@ fun ChatScreen(
             IconButton(
                 onClick = {
                     if (currentText.isNotBlank()) {
-                        messages.add(ChatMessage(System.currentTimeMillis(), currentText, isFromMe = true))
-                        chatAiViewModel.sendPrompt(currentText)
+                        messages.add(ChatMessage(System.currentTimeMillis(), currentText, isFromMe = true)) // tin nhắn người dùng
+                        chatAiViewModel.handleInput(currentText, "" ,"")
                         currentText = ""
                     }
                 }
             ) {
                 Icon(Icons.Default.Send, contentDescription = "Gửi")
+            }
+
+            IconButton(onClick = { onBack.invoke() }) {
+                Icon(Icons.Default.Clear, contentDescription = "Back")
             }
         }
     }

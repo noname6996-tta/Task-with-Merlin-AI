@@ -1,8 +1,18 @@
 package com.example.taskwithmerlinai
 
+import androidx.lifecycle.viewModelScope
+import com.example.taskwithmerlinai.data.model.TaskSendAI
+import com.example.taskwithmerlinai.data.respository.TaskRepository
 import com.tta.chat_ai.AbsChatAiViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class ChatAiViewModel : AbsChatAiViewModel() {
+@HiltViewModel
+class ChatAiViewModel @Inject constructor(
+    private val taskRepository: TaskRepository
+) : AbsChatAiViewModel() {
+
     private fun defaultPrompt(
         userPrompt: String,
         dataChat: String? = null,
@@ -41,7 +51,13 @@ class ChatAiViewModel : AbsChatAiViewModel() {
     }
 
 
-    private fun handleInput(prompt: String) {
-        sendPrompt(prompt)
+    internal fun handleInput(userPrompt: String, dataChat: String? = null, dataFromDb: String? = null) {
+        sendPrompt(defaultPrompt(userPrompt, dataChat, dataFromDb))
+    }
+
+    fun insertTask(taskDetail: TaskSendAI) {
+        viewModelScope.launch {
+            taskRepository.insertTask(taskDetail)
+        }
     }
 }
