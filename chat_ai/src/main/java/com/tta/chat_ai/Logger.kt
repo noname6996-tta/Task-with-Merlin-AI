@@ -3,7 +3,7 @@ package com.tta.chat_ai
 import android.util.Log
 
 object Logger {
-    private const val TAG = "ThemeLogger"
+    private const val TAG = "ChatAI_Logger"
 
     @JvmStatic
     val debug = true

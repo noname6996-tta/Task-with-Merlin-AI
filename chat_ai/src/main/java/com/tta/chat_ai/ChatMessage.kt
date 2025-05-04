@@ -1,4 +1,4 @@
-package com.example.taskwithmerlinai.data.model
+package com.tta.chat_ai
 
 data class ChatMessage(
     val id: Long,
